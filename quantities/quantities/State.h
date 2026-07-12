@@ -3,7 +3,7 @@
 
 /*!
   \file State.h
-  \author gennadiy
+  \author gbug
   \brief Vector of quantities with arbitrary types, definition, documentation and basic tests.
 */
 
@@ -38,7 +38,7 @@ namespace Quantities
 
     // ctors
     constexpr State() noexcept = default;
-    constexpr State(IsState auto &&s) noexcept : data(std::move(s).template get<Qs>()...) {}
+    constexpr State(IsState auto &&s) noexcept : data(std::forward(s).template get<Qs>()...) {}
     constexpr State(const IsState auto &s) noexcept : data(s.template get<Qs>()...) {}
 
     template<class... Args> requires(sizeof...(Args) == sizeof...(Qs))
@@ -81,7 +81,7 @@ namespace Quantities
   std::ostream& operator<<(std::ostream &, const IsState auto &);
 
   // arithmetic operations
-  // NB! operations are asymmetric, right-hand operand must has all the components
+  // NB! operations are not symmetric, right-hand operand must has all the components
   // of the left-hand operand, otherwise an operation is not compilable.
   constexpr auto operator+(const IsState auto &, const IsState auto &) noexcept;
   constexpr auto operator-(const IsState auto &, const IsState auto &) noexcept;

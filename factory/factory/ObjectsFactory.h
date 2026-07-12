@@ -3,7 +3,7 @@
 
 /*!
   \file ObjectsFactory.h
-  \author gennadiy
+  \author gbug
   \brief Define a factory to create objects of arbitraty types by their string ids.
 */
 
@@ -90,15 +90,14 @@ namespace IO
   {
     std::vector<std::string> names;
     ObjectsFactory<Factory>::dump_names(names);
-    std::sort(std::begin(names), std::end(names));
+    std::ranges::sort(names);
 
     message
       << "Factory: \"" << name << "\".\n"
       << "Description: \"" << description << "\".\n"
       << "Available object(s):\n";
 
-    int counter = 0;
-    for (auto &name : names)
+    for (int counter = 0; auto &name : names)
       message << std::setw(3) << (++counter) << ". " << name << '\n';
   }
 

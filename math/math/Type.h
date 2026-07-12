@@ -3,7 +3,7 @@
 
 /*!
   \file Type.h
-  \author gennadiy
+  \author gbug
   \brief Concept for types eligible in numerical computations.
 */
 

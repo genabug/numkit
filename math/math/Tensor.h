@@ -3,7 +3,7 @@
 
 /*!
   \file Tensor.h
-  \author gennadiy
+  \author gbug
   \brief Tensor of rank 2 with arbitrary type, definition, documentation and tests.
 */
 
@@ -15,7 +15,6 @@ namespace Math
   {
     T data[N][N] = {};
     static_assert(N != 0, "Tensor of zero size is meaningless.");
-    static_assert(std::is_default_constructible_v<T>, "Components must be default constructible");
 
   public:
     // traits
