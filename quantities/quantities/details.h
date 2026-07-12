@@ -3,7 +3,7 @@
 
 /*!
   \file Details.h
-  \author gennadiy
+  \author gbug
   \brief A bunch of helpers to implement Quantities::Traits and Quantities::State.
 */
 

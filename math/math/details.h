@@ -3,7 +3,7 @@
 
 /*!
   \file details.h
-  \author gennadiy
+  \author gbug
   \brief Various helpers
 */
 

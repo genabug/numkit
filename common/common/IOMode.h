@@ -3,8 +3,8 @@
 
 /*!
   \file IOMode.h
-  \authors boldar, gennadiy
-  \brief IO manipulators for array-like types (Vector, Tensor, etc.)
+  \authors boldar, gbug
+  \brief IO manipulators and helpers for array-like types (Vector, Tensor, etc.)
 */
 
 #include <cctype>
@@ -77,7 +77,7 @@ namespace IO
     if (in_brackets)
       in.get();
 
-    const auto size = std::distance(data.begin(), data.end());
+    const auto size = std::ranges::size(data);
     for (size_t i = 0; auto &value : data)
     {
       if (!(in >> value))

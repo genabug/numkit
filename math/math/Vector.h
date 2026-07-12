@@ -3,7 +3,7 @@
 
 /*!
   \file Vector.h
-  \author gennadiy
+  \author gbug
   \brief Euclidian vector and componentwise array of arbitrary dimension, definition, documentation and tests.
 */
 
@@ -18,7 +18,6 @@ namespace Math
   {
     T data[N] = {};
     static_assert(N != 0, "Vector of zero size is meaningless.");
-    static_assert(std::is_default_constructible_v<T>, "Components must be default constructible");
 
   public:
     // traits

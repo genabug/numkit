@@ -3,7 +3,7 @@
 
 /*!
   \file Traits.h
-  \author gennadiy
+  \author gbug
   \brief Quantity's traits, definition, documentation and tests.
 */
 
@@ -16,8 +16,8 @@ namespace Quantities
   {
     using type = T;
     static constexpr int dim = Dim;
-    static constexpr int ncomps = details::ncomps_of<T>();
     static constexpr auto id = name;
+    static constexpr int ncomps = details::ncomps_of<T>();
   };
 
   namespace details
@@ -44,7 +44,7 @@ namespace Quantities::tests
   struct HD
   {
     double rho, P, w;
-    static constexpr int ncomps = 3 * sizeof(double);
+    static constexpr int ncomps = 3;
     constexpr bool operator==(const HD &) const = default;
     constexpr HD& operator+=(const HD &o) { rho += o.rho; P += o.P; w += o.w; return *this; }
     constexpr HD& operator-=(const HD &o) { rho -= o.rho; P -= o.P; w -= o.w; return *this; }
