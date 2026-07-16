@@ -302,22 +302,6 @@ namespace Math
 /*---------------------------------------------------------------------------------------*/
 
   template<size_t N, Type T>
-    constexpr Tensor<N-1, T> Tensor<N, T>::M(size_t I, size_t J) const noexcept
-  {
-    Tensor<N-1, T> A;
-    for (size_t i = 0; i < N-1; ++i)
-      for (size_t j = 0; j < N-1; ++j)
-      {
-        size_t im = (i < I)? i : i+1;
-        size_t jm = (j < J)? j : j+1;
-        A[i, j] = data[im*N + jm];
-      }
-    return A;
-  }
-
-/*---------------------------------------------------------------------------------------*/
-
-  template<size_t N, Type T>
     constexpr auto& operator*=(Vector<N, T> &a, const Tensor<N, T> &A) noexcept
   {
     auto b = a;
@@ -442,7 +426,7 @@ namespace Math
     else if constexpr (N == 3)
       return data[0] * (data[4]*data[8] - data[5]*data[7]) +
              data[1] * (data[5]*data[6] - data[3]*data[8]) +
-             data[2] * (data[3]*data[5] - data[4]*data[6]);
+             data[2] * (data[3]*data[7] - data[4]*data[6]);
     else // generic case N > 3
     {
       T d = 0;
@@ -452,6 +436,22 @@ namespace Math
         d += (1 - ((j & 1) << 1)) * data[j] * M(0, j).det();
       return d;
     }
+  }
+
+/*---------------------------------------------------------------------------------------*/
+
+  template<size_t N, Type T>
+    constexpr Tensor<N-1, T> Tensor<N, T>::M(size_t I, size_t J) const noexcept
+  {
+    Tensor<N-1, T> A;
+    for (size_t i = 0; i < N-1; ++i)
+      for (size_t j = 0; j < N-1; ++j)
+      {
+        size_t im = (i < I)? i : i+1;
+        size_t jm = (j < J)? j : j+1;
+        A[i, j] = data[im*N + jm];
+      }
+    return A;
   }
 
 } // namespace Math

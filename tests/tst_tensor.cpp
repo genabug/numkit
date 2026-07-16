@@ -195,7 +195,6 @@ TEST(Tensor, invert_3x3)
 TEST(Tensor, invert_4x4)
 {
   using T4i = Tensor<4, int>;
-  T4i E4(1, 1, 1, 1);
   T4i t4(2, 3, 5, 2,
          6, 1, 8, 3,
          5, 4, 9, 2,
@@ -206,7 +205,7 @@ TEST(Tensor, invert_4x4)
      -113, -26,  71,  27,
        30,   7, -19,  -7);
   EXPECT_EQ(t4.invert(), t4_inverted);
-  EXPECT_EQ(t4 * t4_inverted, E4);
+  EXPECT_EQ(t4 * t4_inverted, T4i(1, 1, 1, 1));
 }
 
 TEST(Tensor, output_default_in_brackets)
