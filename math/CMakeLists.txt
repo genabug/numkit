@@ -6,5 +6,5 @@ add_library(math INTERFACE
 )
 
 target_link_libraries(math INTERFACE common)
-target_compile_features(math INTERFACE cxx_std_20)
+target_compile_features(math INTERFACE cxx_std_23)
 target_include_directories(math INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")

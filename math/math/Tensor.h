@@ -13,33 +13,37 @@ namespace Math
 {
   template<size_t N, Type T = double> class Tensor
   {
-    T data[N][N] = {};
+    std::array<T, N*N> data = {};
     static_assert(N != 0, "Tensor of zero size is meaningless.");
 
   public:
     // traits
     static constexpr int ncomps = N*N;
 
-    constexpr auto* begin() noexcept { return &data[0][0]; }
-    constexpr auto* end() noexcept { return begin() + ncomps; }
-    constexpr auto* begin() const noexcept { return &data[0][0]; }
-    constexpr auto* end() const noexcept { return begin() + ncomps; }
+    constexpr auto begin() noexcept { return data.begin(); }
+    constexpr auto end() noexcept { return data.end(); }
+    constexpr auto begin() const noexcept { return data.begin(); }
+    constexpr auto end() const noexcept { return data.end(); }
 
     // ctors
-    constexpr Tensor() noexcept = default;
-    template<class U> constexpr explicit Tensor(const U &a) noexcept;
-    template<class... Ts> constexpr explicit Tensor(const Ts&... as) noexcept;
+    constexpr explicit Tensor() noexcept = default;
+    template<class U> requires(std::is_convertible_v<U, T>)
+      constexpr explicit Tensor(const U &a) noexcept;
+    template<class... Ts> requires(sizeof...(Ts) == N)
+      constexpr explicit Tensor(const Ts&... as) noexcept;
+    template<class... Ts> requires(sizeof...(Ts) == N*N)
+      constexpr explicit Tensor(const Ts&... as) noexcept;
 
     // converters
     template<Type U> constexpr explicit Tensor(const Tensor<N, U> &t) noexcept;
     template<Type U> constexpr Tensor& operator=(const Tensor<N, U> &t) noexcept;
 
     // access
-    constexpr T* operator[](size_t i) && noexcept = delete;
-    constexpr T* operator[](size_t i) & noexcept { assert(i < N); return data[i]; }
-    constexpr const T* operator[](size_t i) const & noexcept { assert(i < N); return data[i]; }
+    constexpr T operator[](size_t i, size_t j) && noexcept { assert(i < N && j < N); return data[i*N + j]; }
+    constexpr T& operator[](size_t i, size_t j) & noexcept { assert(i < N && j < N); return data[i*N + j]; }
+    constexpr const T& operator[](size_t i, size_t j) const & noexcept { assert(i < N && j < N); return data[i*N + j]; }
 
-    // unary ops (NB! returns a copy!)
+    // unary ops (NB! returns a copy)
     constexpr Tensor operator-() const noexcept;
     constexpr Tensor operator+() const noexcept { return *this; }
     constexpr Tensor operator~() const noexcept { return transpose(); }
@@ -63,12 +67,6 @@ namespace Math
 
   private:
     constexpr Tensor<N-1, T> M(size_t I, size_t J) const noexcept;
-
-    // init helpers
-    template<size_t I = N, class = std::enable_if_t<I == N>>
-      constexpr void init(const Array<N, T> &arr) noexcept;
-    template<size_t I = N*N, class = std::enable_if_t<I == N*N>, class = T>
-      constexpr void init(const Array<N*N, T> &arr) noexcept;
   }; // class Tensor<N, T>
 
   using Tensor2D = Tensor<2>;
@@ -99,7 +97,6 @@ namespace Math
     constexpr auto operator/(Tensor<N, T> A, const Tensor<N, T> &B) noexcept { A /= B; return A; }
 
   // io ops
-  // TODO: error-handling: throw an exception in case of unexpected symbols, ...
   template<size_t N, Type T>
     std::istream& operator>>(std::istream &in, Tensor<N, T> &A);
 
@@ -148,20 +145,23 @@ namespace Math
 /*------------------------------------ definition ---------------------------------------*/
 /*---------------------------------------------------------------------------------------*/
 
-  template<size_t N, Type T> template<class U>
+  template<size_t N, Type T> template<class U> requires(std::is_convertible_v<U, T>)
     constexpr Tensor<N, T>::Tensor(const U &a) noexcept
   {
     for (size_t i = 0; i < N; ++i)
-      data[i][i] = static_cast<T>(a);
+      data[i*N + i] = static_cast<T>(a);
   }
 
-  template<size_t N, Type T> template<class... Ts>
+  template<size_t N, Type T> template<class... Ts> requires(sizeof...(Ts) == N)
     constexpr Tensor<N, T>::Tensor(const Ts&... as) noexcept
   {
-    constexpr auto n = sizeof...(Ts);
-    static_assert(n == N || n == N*N, "Ambiguous number of arguments.");
-    init(Array<n, T>(as...));
+    const std::array<T, N> arr{as...};
+    for (size_t i = 0; i < N; ++i)
+      data[i*N + i] = static_cast<T>(arr[i]);
   }
+
+  template<size_t N, Type T> template<class... Ts> requires(sizeof...(Ts) == N*N)
+    constexpr Tensor<N, T>::Tensor(const Ts&... as) noexcept : data{as...} {}
 
 /*---------------------------------------------------------------------------------------*/
 
@@ -170,7 +170,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] = static_cast<T>(t[i][j]);
+        data[i*N + j] = static_cast<T>(t[i, j]);
   }
 
 /*---------------------------------------------------------------------------------------*/
@@ -180,7 +180,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] = static_cast<T>(t[i][j]);
+        data[i*N + j] = static_cast<T>(t[i, j]);
     return *this;
   }
 
@@ -192,7 +192,7 @@ namespace Math
     Tensor<N, T> A;
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        A[i][j] = -data[i][j];
+        A[i, j] = -data[i*N + j];
     return A;
   }
 
@@ -203,7 +203,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] *= a;
+        data[i*N + j] *= a;
     return *this;
   }
 
@@ -214,7 +214,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] /= a;
+        data[i*N + j] /= a;
     return *this;
   }
 
@@ -225,7 +225,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] += A[i][j];
+        data[i*N + j] += A[i, j];
     return *this;
   }
 
@@ -236,7 +236,7 @@ namespace Math
   {
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        data[i][j] -= A[i][j];
+        data[i*N + j] -= A[i, j];
     return *this;
   }
 
@@ -249,9 +249,9 @@ namespace Math
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
       {
-        data[i][j] = 0;
+        data[i*N + j] = 0;
         for (size_t k = 0; k < N; ++k)
-          data[i][j] += B[i][k]*A[k][j];
+          data[i*N + j] += B[i, k]*A[k, j];
       }
     return *this;
   }
@@ -262,7 +262,7 @@ namespace Math
   {
     T tr = 0;
     for (size_t i = 0; i < N; ++i)
-      tr += data[i][i];
+      tr += data[i*N + i];
     return tr;
   }
 
@@ -283,7 +283,7 @@ namespace Math
     T c = static_cast<T>(1) / d;
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        A[j][i] = ( ((i + j) & 1)? -c : c ) * M(i, j).det();
+        A[j, i] = ( ((i + j) & 1)? -c : c ) * M(i, j).det();
 
     return A;
   }
@@ -295,23 +295,7 @@ namespace Math
     Tensor<N, T> A;
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        A[i][j] = data[j][i];
-    return A;
-  }
-
-/*---------------------------------------------------------------------------------------*/
-
-  template<size_t N, Type T>
-    constexpr Tensor<N-1, T> Tensor<N, T>::M(size_t I, size_t J) const noexcept
-  {
-    Tensor<N-1, T> A;
-    for (size_t i = 0; i < N-1; ++i)
-      for (size_t j = 0; j < N-1; ++j)
-      {
-        size_t im = (i < I)? i : i+1;
-        size_t jm = (j < J)? j : j+1;
-        A[i][j] = data[im][jm];
-      }
+        A[i, j] = data[j*N + i];
     return A;
   }
 
@@ -325,7 +309,7 @@ namespace Math
     {
       a[i] = 0;
       for (size_t j = 0; j < N; ++j)
-        a[i] += b[j] * A[j][i];
+        a[i] += b[j] * A[j, i];
     }
     return a;
   }
@@ -356,7 +340,7 @@ namespace Math
     Tensor<N, T> t;
     for (size_t i = 0; i < N; ++i)
       for (size_t j = 0; j < N; ++j)
-        t[i][j] = a[i] * b[j];
+        t[i, j] = a[i] * b[j];
     return t;
   }
 
@@ -365,8 +349,8 @@ namespace Math
   template<Type T>
     constexpr auto operator%(const Tensor<2, T> &A, const Vector<2, T> &a) noexcept
   {
-    return Vector<2, T>(A[0][0] * a[1] - A[0][1] * a[0],
-                        A[1][0] * a[1] - A[1][1] * a[0]);
+    return Vector<2, T>(A[0, 0] * a[1] - A[0, 1] * a[0],
+                        A[1, 0] * a[1] - A[1, 1] * a[0]);
   }
 
 /*---------------------------------------------------------------------------------------*/
@@ -374,8 +358,8 @@ namespace Math
   template<Type T>
     constexpr auto operator%(const Vector<2, T> &a, const Tensor<2, T> &A) noexcept
   {
-    return Vector<2, T>(a[0] * A[1][0] - a[1] * A[0][0],
-                        a[0] * A[1][1] - a[1] * A[0][1]);
+    return Vector<2, T>(a[0] * A[1, 0] - a[1] * A[0, 0],
+                        a[0] * A[1, 1] - a[1] * A[0, 1]);
   }
 
 /*---------------------------------------------------------------------------------------*/
@@ -384,10 +368,10 @@ namespace Math
     constexpr auto operator%(const Tensor<2, T> &A, const Tensor<2, T> &B) noexcept
   {
     Tensor<2, T> R;
-    R[0][0] = A[0][0] * B[1][0] - A[0][1] * B[0][0];
-    R[0][1] = A[0][0] * B[1][1] - A[0][1] * B[0][1];
-    R[1][0] = A[1][0] * B[1][0] - A[1][1] * B[0][0];
-    R[1][1] = A[1][0] * B[1][1] - A[1][1] * B[0][1];
+    R[0, 0] = A[0, 0] * B[1, 0] - A[0, 1] * B[0, 0];
+    R[0, 1] = A[0, 0] * B[1, 1] - A[0, 1] * B[0, 1];
+    R[1, 0] = A[1, 0] * B[1, 0] - A[1, 1] * B[0, 0];
+    R[1, 1] = A[1, 0] * B[1, 1] - A[1, 1] * B[0, 1];
     return R;
   }
 
@@ -408,9 +392,9 @@ namespace Math
     Tensor<3, T> R;
     for (size_t i = 0; i < 3; ++i)
     {
-      R[i][0] = A[i][1] * a[2] - A[i][2] * a[1];
-      R[i][1] = A[i][2] * a[0] - A[i][0] * a[2];
-      R[i][2] = A[i][0] * a[1] - A[i][1] * a[0];
+      R[i, 0] = A[i, 1] * a[2] - A[i, 2] * a[1];
+      R[i, 1] = A[i, 2] * a[0] - A[i, 0] * a[2];
+      R[i, 2] = A[i, 0] * a[1] - A[i, 1] * a[0];
     }
     return R;
   }
@@ -423,9 +407,9 @@ namespace Math
     Tensor<3, T> R;
     for (size_t i = 0; i < 3; ++i)
     {
-      R[0][i] = a[1] * A[2][i] - a[2] * A[1][i];
-      R[1][i] = a[2] * A[0][i] - a[0] * A[2][i];
-      R[2][i] = a[0] * A[1][i] - a[1] * A[0][i];
+      R[0, i] = a[1] * A[2, i] - a[2] * A[1, i];
+      R[1, i] = a[2] * A[0, i] - a[0] * A[2, i];
+      R[2, i] = a[0] * A[1, i] - a[1] * A[0, i];
     }
     return R;
   }
@@ -436,40 +420,40 @@ namespace Math
     constexpr T Tensor<N, T>::det() const noexcept
   {
     if constexpr (N == 1)
-      return data[0][0];
+      return data[0];
     else if constexpr (N == 2)
-      return data[0][0]*data[1][1] - data[0][1]*data[1][0];
+      return data[0]*data[3] - data[1]*data[2];
     else if constexpr (N == 3)
-      return data[0][0] * (data[1][1]*data[2][2] - data[1][2]*data[2][1]) +
-             data[0][1] * (data[1][2]*data[2][0] - data[1][0]*data[2][2]) +
-             data[0][2] * (data[1][0]*data[2][1] - data[1][1]*data[2][0]);
+      return data[0] * (data[4]*data[8] - data[5]*data[7]) +
+             data[1] * (data[5]*data[6] - data[3]*data[8]) +
+             data[2] * (data[3]*data[7] - data[4]*data[6]);
     else // generic case N > 3
     {
       T d = 0;
       for (size_t j = 0; j < N; ++j)
         // coeff: -1 if odd, 1 else,
         // (j & 1) returns 1 if odd, else 0; x << 1 ~ 2*x
-        d += (1 - ((j & 1) << 1)) * data[0][j] * M(0, j).det();
+        d += (1 - ((j & 1) << 1)) * data[j] * M(0, j).det();
       return d;
     }
   }
 
 /*---------------------------------------------------------------------------------------*/
 
-  template<size_t N, Type T> template<size_t I, class>
-    constexpr void Tensor<N, T>::init(const Array<N, T> &arr) noexcept
+  template<size_t N, Type T>
+    constexpr Tensor<N-1, T> Tensor<N, T>::M(size_t I, size_t J) const noexcept
   {
-    for (size_t i = 0; i < I; ++i)
-      data[i][i] = arr[i];
+    Tensor<N-1, T> A;
+    for (size_t i = 0; i < N-1; ++i)
+      for (size_t j = 0; j < N-1; ++j)
+      {
+        size_t im = (i < I)? i : i+1;
+        size_t jm = (j < J)? j : j+1;
+        A[i, j] = data[im*N + jm];
+      }
+    return A;
   }
 
-  template<size_t N, Type T> template<size_t I, class, class>
-    constexpr void Tensor<N, T>::init(const Array<N*N, T> &arr) noexcept
-  {
-    for (size_t i = 0; i < N; ++i)
-      for (size_t j = 0; j < N; ++j)
-        data[i][j] = arr[i*N + j];
-  }
 } // namespace Math
 
 /*---------------------------------------------------------------------------------------*/
@@ -489,15 +473,15 @@ namespace Math::Tensors::tests
 
   // init & access
   constexpr T2i Z(0), E(1), t1(1, 2), t2(3, 4, 5, 6);
-  static_assert((Z[0][0] == 0) && (Z[0][1] == 0) && (Z[1][0] == 0) && (Z[1][1] == 0), "default init failed");
-  static_assert((E[0][0] == 1) && (E[0][1] == 0) && (E[1][0] == 0) && (E[1][1] == 1), "single init failed");
-  static_assert((t1[0][0] == 1) && (t1[0][1] == 0) && (t1[1][0] == 0) && (t1[1][1] == 2), "diagonal init failed");
-  static_assert((t2[0][0] == 3) && (t2[0][1] == 4) && (t2[1][0] == 5) && (t2[1][1] == 6), "full init failed");
+  static_assert((Z[0, 0] == 0) && (Z[0, 1] == 0) && (Z[1, 0] == 0) && (Z[1, 1] == 0), "default init failed");
+  static_assert((E[0, 0] == 1) && (E[0, 1] == 0) && (E[1, 0] == 0) && (E[1, 1] == 1), "single init failed");
+  static_assert((t1[0, 0] == 1) && (t1[0, 1] == 0) && (t1[1, 0] == 0) && (t1[1, 1] == 2), "diagonal init failed");
+  static_assert((t2[0, 0] == 3) && (t2[0, 1] == 4) && (t2[1, 0] == 5) && (t2[1, 1] == 6), "full init failed");
 
   // conversion
   constexpr T2d d(1., 2., 3., 4.);
   constexpr T2i m = T2i(d);
-  static_assert((m[0][0] == 1) && (m[0][1] == 2) && (m[1][0] == 3) && (m[1][1] == 4), "conversion d -> i failed");
+  static_assert((m[0, 0] == 1) && (m[0, 1] == 2) && (m[1, 0] == 3) && (m[1, 1] == 4), "conversion d -> i failed");
 
   // ops
   static_assert(Z == Z, "t == t failed");

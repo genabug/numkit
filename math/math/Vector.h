@@ -10,26 +10,27 @@
 #include "Type.h"
 #include "details.h"
 #include "common/IOMode.h"
+#include <array>
 #include <cassert>
 
 namespace Math
 {
   template<size_t N, Type T = double, bool is_euclidian = true> class Vector
   {
-    T data[N] = {};
+    std::array<T, N> data = {};
     static_assert(N != 0, "Vector of zero size is meaningless.");
 
   public:
     // traits
     static constexpr int ncomps = N;
 
-    constexpr auto* begin() noexcept { return data; }
-    constexpr auto* end() noexcept { return data + ncomps; }
-    constexpr auto* begin() const noexcept { return data; }
-    constexpr auto* end() const noexcept { return data + ncomps; }
+    constexpr auto begin() noexcept { return data.begin(); }
+    constexpr auto end() noexcept { return data.end(); }
+    constexpr auto begin() const noexcept { return data.begin(); }
+    constexpr auto end() const noexcept { return data.end(); }
 
     // ctors
-    constexpr Vector() noexcept = default;
+    constexpr explicit Vector() noexcept = default;
     template<class U> constexpr explicit Vector(const U &a) noexcept;
     template<class... Ts> requires(sizeof...(Ts) == N)
       constexpr explicit Vector(Ts... as) noexcept : data{static_cast<T>(as)...} {}
@@ -45,11 +46,11 @@ namespace Math
     static constexpr size_t Y = (N > 1)? 1 : X;
     static constexpr size_t Z = (N > 2)? 2 : Y;
 
-    constexpr auto operator[](size_t i) && noexcept { assert(i < N); return data[i]; }
-    constexpr auto& operator[](size_t i) & noexcept { assert(i < N); return data[i]; }
-    constexpr auto& operator[](size_t i) const & noexcept { assert(i < N); return data[i]; }
+    constexpr T operator[](size_t i) && noexcept { assert(i < N); return data[i]; }
+    constexpr T& operator[](size_t i) & noexcept { assert(i < N); return data[i]; }
+    constexpr const T& operator[](size_t i) const & noexcept { assert(i < N); return data[i]; }
 
-    // unary ops (NB! returns a copy!)
+    // unary ops (NB! returns a copy)
     constexpr Vector operator+() const noexcept { return *this; }
     constexpr Vector operator-() const noexcept { return static_cast<T>(-1) * (*this); }
 
@@ -91,7 +92,6 @@ namespace Math
     constexpr auto operator/(Vector<N, T, B> v, const T &a) noexcept { v /= a; return v; }
 
   // IO ops
-  // TODO: should throw an exception in case of unexpected format, symbols, ...
   template<size_t N, Type T, bool B>
     std::istream& operator>>(std::istream &in, Vector<N, T, B> &v);
 
@@ -286,6 +286,7 @@ namespace Math::Vectors::tests
   constexpr V3i v, v1(1), v2(2, 3, 4), v3(v2);
 
   // access
+  static_assert((v[0] == 0) && (v[1] == 0) && (v[2] == 0), "default init failed");
   static_assert((v1[0] == 1) && (v1[1] == 1) && (v1[2] == 1), "single init failed");
   static_assert((v2[0] == 2) && (v2[1] == 3) && (v2[2] == 4), "full init failed");
   static_assert((v3[0] == 2) && (v3[1] == 3) && (v3[2] == 4), "full init failed");
