@@ -6,7 +6,7 @@ A C++ header-only library providing low-level mathematical data structures for n
 
 ### Type (`math/Type.h`)
 
-A C++20 concept constraining types eligible for numerical computations:
+A concept constraining types eligible for numerical computations:
 
 - Requires default and copy constructibility
 - Requires compound assignment operators (`+=`, `-=`, `*=`, `/=`) and equality (`==`)
@@ -76,7 +76,7 @@ numkit/
 
 ## Build
 
-Requires CMake 3.23+ and a C++20 compatible compiler. Right now there is nothing to build, it's a header-only library.
+Requires CMake 3.23+ and a C++23 compatible compiler. Right now there is nothing to build, it's a header-only library.
 
 ### Tests
 
@@ -103,7 +103,6 @@ The generated HTML documentation will be available in `build/docs/html/`.
 
 - No examples :(
 - Materials with deducing this 8) (c++23)
-- Tensor with multidimentional subscript op (c++23)
 - units of quantities
 - states made with traits-variables, not types
 - ...

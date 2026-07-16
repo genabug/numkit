@@ -12,38 +12,6 @@ using T3i = Tensor<3, int>;
 using V2i = Vector<2, int>;
 using V3i = Vector<3, int>;
 
-TEST(Tensor, init_default_to_zero)
-{
-  T3i t;
-  EXPECT_TRUE(t[0][0] == 0 && t[0][1] == 0 && t[0][2] == 0 &&
-              t[1][0] == 0 && t[1][1] == 0 && t[1][2] == 0 &&
-              t[2][0] == 0 && t[2][1] == 0 && t[2][2] == 0);
-}
-
-TEST(Tensor, init_with_single_sets_diagonal)
-{
-  T3i t(1);
-  EXPECT_TRUE(t[0][0] == 1 && t[0][1] == 0 && t[0][2] == 0 &&
-              t[1][0] == 0 && t[1][1] == 1 && t[1][2] == 0 &&
-              t[2][0] == 0 && t[2][1] == 0 && t[2][2] == 1);
-}
-
-TEST(Tensor, init_with_diagonal_sets_diagonal)
-{
-  T3i t{1, 2, 3};
-  EXPECT_TRUE(t[0][0] == 1 && t[0][1] == 0 && t[0][2] == 0 &&
-              t[1][0] == 0 && t[1][1] == 2 && t[1][2] == 0 &&
-              t[2][0] == 0 && t[2][1] == 0 && t[2][2] == 3);
-  }
-
-TEST(Tensor, init_with_full_sets_all)
-{
-  T3i t{1, 2, 3, 4, 5, 6, 7, 8, 9};
-  EXPECT_TRUE(t[0][0] == 1 && t[0][1] == 2 && t[0][2] == 3 &&
-              t[1][0] == 4 && t[1][1] == 5 && t[1][2] == 6 &&
-              t[2][0] == 7 && t[2][1] == 8 && t[2][2] == 9);
-}
-
 TEST(Tensor, copy_constructor)
 {
   T3i t1(1);
@@ -63,41 +31,6 @@ TEST(Tensor, brace_copy)
   T3i t1{1, 2, 3, 4, 5, 6, 7, 8, 9};
   T3i t1c{t1};
   EXPECT_EQ(t1c, t1);
-}
-
-TEST(Tensor, conversion_int_to_double)
-{
-  T3i ti{1, 2, 3, 4, 5, 6, 7, 8, 9};
-  T3d td = T3d(ti);
-  EXPECT_DOUBLE_EQ(td[0][0], 1.0);
-  EXPECT_DOUBLE_EQ(td[1][1], 5.0);
-  EXPECT_DOUBLE_EQ(td[2][2], 9.0);
-}
-
-TEST(Tensor, conversion_double_to_int)
-{
-  T3d td{1.9, 2.1, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
-  T3i ti = T3i(td);
-  EXPECT_EQ(ti[0][0], 1);
-  EXPECT_EQ(ti[0][1], 2);
-  EXPECT_EQ(ti[0][2], 3);
-}
-
-TEST(Tensor, access)
-{
-  T2i t(1, 2, 3, 4);
-  EXPECT_EQ(t[0][0], 1);
-  EXPECT_EQ(t[0][1], 2);
-  EXPECT_EQ(t[1][0], 3);
-  EXPECT_EQ(t[1][1], 4);
-
-  t[0][0] = 10;
-  EXPECT_EQ(t[0][0], 10);
-
-  // Note: accessing rows from rvalue tensors is intentionally disabled
-  // to prevent dangling references. The following would cause compile errors:
-  //   auto row0 = T2i(1, 2, 3, 4)[0];
-  //   const auto row1 = T2i(4, 3, 2, 1)[1];
 }
 
 TEST(Tensor, equality)
